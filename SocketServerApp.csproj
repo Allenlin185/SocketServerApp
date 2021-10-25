@@ -56,6 +56,9 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="XMLMethod">
+      <HintPath>..\XMLMethod\bin\Debug\XMLMethod.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -70,6 +73,10 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Models\ChatUserInfo.cs" />
+    <Compile Include="Models\ChatTypeInfoEnum.cs" />
+    <Compile Include="Models\ServiceSockertHelper.cs" />
+    <Compile Include="Models\innerdiameter.cs" />
     <Compile Include="Models\ProgramMethod.cs" />
     <Compile Include="Models\SocketLocation.cs" />
     <Compile Include="Models\GearGrinding.cs" />

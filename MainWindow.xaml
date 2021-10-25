@@ -5,21 +5,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SocketServerApp"
         mc:Ignorable="d"
-        Title="Hota Socket Server" Height="450" Width="450" Icon="images.png" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Hota Socket Server" Height="580" Width="600" Icon="images.png" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
     <Grid>
-        <Image HorizontalAlignment="Left" Margin="10,10,0,361" Width="424" Source="hota_logo.png"/>
-        <Label x:Name="lb_serverip" Content="Server IP" HorizontalAlignment="Left" Margin="60,136,0,0" FontFamily="Arial Black" FontSize="14" Height="29" VerticalAlignment="Top"/>
-        <Label x:Name="lb_serverport" Content="Port" HorizontalAlignment="Left" Margin="98,170,0,0" FontFamily="Arial Black" FontSize="14" Height="27" VerticalAlignment="Top"/>
-        <ScrollViewer x:Name="sv_log" HorizontalAlignment="Left" Margin="10,243,0,0" Width="424" Height="155" VerticalAlignment="Top" FontFamily="Arial Black" FontSize="14" Content=""/>
-        <Button x:Name="btn_start" Content="啟動" HorizontalAlignment="Left" Margin="301,198,0,0" VerticalAlignment="Top" Width="90" FontFamily="Arial Black" FontSize="14" Height="30" Background="#FFB6F0AD" BorderBrush="#FF7AAC72" Click="btn_start_Click"/>
-        <TextBox x:Name="tb_port" HorizontalAlignment="Left" Height="27" Margin="145,170,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" FontFamily="Arial Black" FontSize="14" Padding="0,5,0,0"/>
-        <Button x:Name="btn_stop" Content="停止" HorizontalAlignment="Left" Margin="300,170,0,0" VerticalAlignment="Top" Width="90" FontFamily="Arial Black" FontSize="14" Height="30" Background="#FFEA998C" BorderBrush="#FFAC7C71" Click="btn_stop_Click" Visibility="Hidden"/>
-        <ComboBox x:Name="cb_ipaddress" HorizontalAlignment="Left" Margin="145,136,0,0" VerticalAlignment="Top" Width="120" Height="27" FontSize="14" FontFamily="Arial Black"/>
-        <Label x:Name="lb_database" Content="DB Type" HorizontalAlignment="Left" Margin="60,102,0,0" FontFamily="Arial Black" FontSize="14" Height="29" VerticalAlignment="Top"/>
-        <ComboBox x:Name="cb_database" HorizontalAlignment="Left" Margin="145,104,0,0" VerticalAlignment="Top" Width="120" Height="27" FontSize="14" FontFamily="Arial Black" SelectedIndex="0" IsSynchronizedWithCurrentItem="False">
+        <Image HorizontalAlignment="Left" Margin="10,0,0,0" Width="574" Source="hota_logo.png" Height="60" VerticalAlignment="Top"/>
+        <Label x:Name="lb_serverip" Content="請選擇伺服器IP" HorizontalAlignment="Left" Margin="190,86,0,0" FontFamily="Arial Black" FontSize="14" Height="29" VerticalAlignment="Top" Width="175"/>
+        <Label x:Name="lb_serverport" Content="請輸入埠號" HorizontalAlignment="Left" Margin="370,88,0,0" FontFamily="Arial Black" FontSize="14" Height="27" VerticalAlignment="Top" Width="110"/>
+        <Button x:Name="btn_start" Content="啟動" HorizontalAlignment="Left" Margin="485,117,0,0" VerticalAlignment="Top" Width="90" FontFamily="Arial Black" FontSize="14" Height="30" Background="#FFB6F0AD" BorderBrush="#FF7AAC72" Click="btn_start_Click"/>
+        <TextBox x:Name="tb_port" HorizontalAlignment="Left" Height="27" Margin="370,120,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" FontFamily="Arial Black" FontSize="14" Padding="0,5,0,0"/>
+        <Button x:Name="btn_stop" Content="停止" HorizontalAlignment="Left" Margin="485,117,0,0" VerticalAlignment="Top" Width="90" FontFamily="Arial Black" FontSize="14" Height="30" Background="#FFEA998C" BorderBrush="#FFAC7C71" Click="btn_stop_Click" Visibility="Hidden"/>
+        <ComboBox x:Name="cb_ipaddress" HorizontalAlignment="Left" Margin="190,120,0,0" VerticalAlignment="Top" Width="175" Height="27" FontSize="14" FontFamily="Arial Black"/>
+        <Label x:Name="lb_database" Content="請選擇資料庫類別" HorizontalAlignment="Left" Margin="10,86,0,0" FontFamily="Arial Black" FontSize="14" Height="29" VerticalAlignment="Top" Width="175"/>
+        <ComboBox x:Name="cb_database" HorizontalAlignment="Left" Margin="10,120,0,0" VerticalAlignment="Top" Width="175" Height="27" FontSize="14" FontFamily="Arial Black" SelectedIndex="0" IsSynchronizedWithCurrentItem="False">
             <ComboBoxItem Content="SQL Server"/>
             <ComboBoxItem Content="MySQL"/>
         </ComboBox>
-
+        <Label Content="訊息清單" HorizontalAlignment="Left" Margin="190,170,0,0" VerticalAlignment="Top" FontFamily="Arial Black" FontSize="14"/>
+        <Label Content="客戶端列表" HorizontalAlignment="Left" Margin="10,170,0,0" VerticalAlignment="Top" FontSize="14" FontFamily="Arial Black"/>
+        <ListBox x:Name="lb_users" HorizontalAlignment="Left" Height="210" Margin="10,201,0,0" VerticalAlignment="Top" Width="175"/>
+        <Border BorderThickness="1" BorderBrush="#FFABADB3" Margin="190,201,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="210" Width="385" >
+            <TextBlock x:Name="tb_message" Margin="9" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        </Border>
+        <TextBox x:Name="tb_sendmsg" HorizontalAlignment="Left" Height="23" Margin="10,430,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="565"/>
+        <Button x:Name="bt_sendmsg" Content="發送訊息" HorizontalAlignment="Left" Margin="485,462,0,0" VerticalAlignment="Top" Width="90" Height="30" Background="#FFB6F0AD" BorderBrush="#FF7AAC72" FontFamily="Arial Black" FontSize="14" Click="bt_sendmsg_Click"/>
+        <Button x:Name="bt_sendgroup" Content="群組訊息" HorizontalAlignment="Left" Margin="370,462,0,0" VerticalAlignment="Top" Width="90" Height="30" Background="#FFF3AD31" BorderBrush="#FFC98432" FontFamily="Arial Black" FontSize="14" Click="bt_sendgroup_Click"/>
+        <Label x:Name="lb_status" Content="" HorizontalAlignment="Left" Margin="10,505,0,0" VerticalAlignment="Top" Width="565" BorderBrush="#FFABADB3" BorderThickness="1" Foreground="#FFF7092A"/>
     </Grid>
 </Window>

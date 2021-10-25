@@ -21,7 +21,7 @@ namespace SocketServerApp.Models
             }
             string nowTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             StreamWriter sw = File.AppendText(pathString);
-            sw.WriteLine(nowTime + ":" + logMsg);
+            sw.WriteLine(nowTime + ": " + logMsg);
             sw.Close();
         }
         public void WriteGGData(GearGrinding GGData, string Repeat = "N")
@@ -72,6 +72,26 @@ namespace SocketServerApp.Models
             string nowTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             StreamWriter sw = File.AppendText(pathString);
             sw.WriteLine(recv);
+            sw.Close();
+        }
+        public void WriteIGData(innerdiameter IGData)
+        {
+            string DataFilePath = "DATA";
+            DataFilePath = Path.Combine(DataFilePath, DateTime.Now.ToString("yyyy-MM-dd"));
+            if (!Directory.Exists(DataFilePath))
+            {
+                Directory.CreateDirectory(DataFilePath);
+            }
+            string dataFileName = IGData.machine_no + ".csv";
+            string pathString = Path.Combine(DataFilePath, dataFileName);
+            if (!File.Exists(pathString))
+            {
+                FileStream fs = File.Create(pathString);
+                fs.Close();
+            }
+            StreamWriter sw = File.AppendText(pathString);
+            string DataMsg = IGData.product_id + "," + IGData.qctime + "," + IGData.qc_result + ",";
+            sw.WriteLine(DataMsg);
             sw.Close();
         }
     }
