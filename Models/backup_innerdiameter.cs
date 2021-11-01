@@ -1,15 +1,10 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Data.SqlClient;
-using MySql.Data;
-using MySql.Data.MySqlClient;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SocketServerApp.Models
 {
-    public class innerdiameter
+    public class backup_innerdiameter
     {
         public string product_id { get; set; }
         public DateTime qctime { get; set; }
@@ -30,10 +25,10 @@ namespace SocketServerApp.Models
         public string machine_no { get; set; }
         public string ld_operator { get; set; }
     }
-    public class InnerDiameterManage
+    public class backup_InnerDiameterManage
     {
-        private ProgramMethod PGMethod = new ProgramMethod();
-        public bool InsertTable(innerdiameter IGData, SqlConnection Comm)
+        private backup_ProgramMethod PGMethod = new backup_ProgramMethod();
+        public bool InsertTable(backup_innerdiameter IGData, SqlConnection Comm)
         {
             string InsertSQL = @"insert into innerdiameter (qctime, product_id, qc_result, q1result, q1measured, q1maxvalue, q2result, q2measured, q2maxvalue, q3result, q3measured, 
                 q3thresmax, q3thresmin, q4result, q4measured, q4maxvalue, machine_no, ld_operator) values (@qctime, @product_id, @qc_result, @q1result, @q1measured, @q1maxvalue, 
@@ -74,7 +69,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool CheckProductExist(innerdiameter IGData, SqlConnection Comm)
+        public bool CheckProductExist(backup_innerdiameter IGData, SqlConnection Comm)
         {
             string SelectSQL = @"SELECT qctime, product_id FROM innerdiameter WHERE product_id =@product_id";
             bool ReturnFlage = false;
@@ -95,7 +90,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool UpdateTable(innerdiameter IGData, SqlConnection Comm)
+        public bool UpdateTable(backup_innerdiameter IGData, SqlConnection Comm)
         {
             string UpdateSQL = @"UPDATE innerdiameter SET qctime = @qctime, qc_result = @qc_result, q1result = @q1result, q1measured = @q1measured, 
                 q1maxvalue = @q1maxvalue, q2result = @q2result, q2measured = @q2measured, q2maxvalue = @q2maxvalue, q3result = @q3result, q3measured = @q3measured, 
@@ -137,7 +132,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool InsertTableMysql(innerdiameter IGData, MySqlConnection Comm)
+        public bool InsertTableMysql(backup_innerdiameter IGData, MySqlConnection Comm)
         {
             string InsertSQL = @"insert into igeqdata (cID, cDateTime, cResult, cComment) values (@cID, @cDateTime, @cResult, @cComment)";
             try
@@ -165,7 +160,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool CheckProductMysql(innerdiameter IGData, MySqlConnection Comm)
+        public bool CheckProductMysql(backup_innerdiameter IGData, MySqlConnection Comm)
         {
             string SelectSQL = @"SELECT cID FROM igeqdata WHERE cID =@cID";
             MySqlCommand cmd = new MySqlCommand(SelectSQL, Comm);
@@ -185,7 +180,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool UpdateTableMysql(innerdiameter IGData, MySqlConnection Comm)
+        public bool UpdateTableMysql(backup_innerdiameter IGData, MySqlConnection Comm)
         {
             string UpdateSQL = @"UPDATE igeqdata SET cDateTime = @cDateTime, cResult = @cResult WHERE cID = @cID";
             try

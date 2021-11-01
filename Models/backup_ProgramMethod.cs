@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SocketServerApp.Models
 {
-    class ProgramMethod
+    class backup_ProgramMethod
     {
         public void WriteLog(string logMsg)
         {
@@ -24,7 +24,7 @@ namespace SocketServerApp.Models
             sw.WriteLine(nowTime + ": " + logMsg);
             sw.Close();
         }
-        public void WriteGGData(GearGrinding GGData, string Repeat = "N")
+        public void WriteGGData(backup_GearGrinding GGData, string Repeat = "N")
         {
             string DataFilePath = "DATA";
             DataFilePath = Path.Combine(DataFilePath, DateTime.Now.ToString("yyyy-MM-dd"));
@@ -74,7 +74,7 @@ namespace SocketServerApp.Models
             sw.WriteLine(recv);
             sw.Close();
         }
-        public void WriteIGData(innerdiameter IGData)
+        public void WriteIGData(backup_innerdiameter IGData)
         {
             string DataFilePath = "DATA";
             DataFilePath = Path.Combine(DataFilePath, DateTime.Now.ToString("yyyy-MM-dd"));

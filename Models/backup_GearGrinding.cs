@@ -1,11 +1,10 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Data.SqlClient;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 
 namespace SocketServerApp.Models
 {
-    public class GearGrinding
+    public class backup_GearGrinding
     {
         public string product_id { get; set; }
         public DateTime qctime { get; set; }
@@ -13,10 +12,10 @@ namespace SocketServerApp.Models
         public string reader_ip { get; set; }
         public string point_name { get; set; }
     }
-    public class GearGrindingManage
+    public class backup_GearGrindingManage
     {
-        private ProgramMethod PGMethod = new ProgramMethod();
-        public bool InsertTable(GearGrinding GGData, SqlConnection Comm)
+        private backup_ProgramMethod PGMethod = new backup_ProgramMethod();
+        public bool InsertTable(backup_GearGrinding GGData, SqlConnection Comm)
         {
             string InsertSQL = @"insert into geargrinding (product_id, qctime, reader_name, reader_ip, point_name) 
                 values (@product_id, @qctime, @reader_name, @reader_ip, @point_name)";
@@ -43,7 +42,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool CheckProductExist(GearGrinding GG, SqlConnection Comm)
+        public bool CheckProductExist(backup_GearGrinding GG, SqlConnection Comm)
         {
             string SelectSQL = @"SELECT product_id FROM geargrinding WHERE product_id =@product_id and reader_name =@reader_name and point_name = @point_name";
             bool ReturnFlage = false;
@@ -66,7 +65,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool UpdateTable(GearGrinding GGData, SqlConnection Comm)
+        public bool UpdateTable(backup_GearGrinding GGData, SqlConnection Comm)
         {
             string UpdateSQL = @"UPDATE geargrinding SET qctime = @qctime, reader_ip = @reader_ip WHERE product_id = @product_id and reader_name = @reader_name and point_name = @point_name";
             try
@@ -92,7 +91,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool InsertTableMysql(GearGrinding GGData, MySqlConnection Comm)
+        public bool InsertTableMysql(backup_GearGrinding GGData, MySqlConnection Comm)
         {
             string InsertSQL = @"insert into geargrinding (product_id, qctime, reader_name, reader_ip, point_name) 
                 values (@product_id, @qctime, @reader_name, @reader_ip, @point_name)";
@@ -122,7 +121,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool CheckProductMysql(GearGrinding GGData, MySqlConnection Comm)
+        public bool CheckProductMysql(backup_GearGrinding GGData, MySqlConnection Comm)
         {
             string SelectSQL = @"SELECT product_id FROM geargrinding WHERE product_id =@product_id and reader_name =@reader_name and point_name = @point_name";
             MySqlCommand cmd = new MySqlCommand(SelectSQL, Comm);
@@ -144,7 +143,7 @@ namespace SocketServerApp.Models
                 return false;
             }
         }
-        public bool UpdateTableMysql(GearGrinding GGData, MySqlConnection Comm)
+        public bool UpdateTableMysql(backup_GearGrinding GGData, MySqlConnection Comm)
         {
             string UpdateSQL = @"UPDATE geargrinding SET qctime = @qctime, reader_ip = @reader_ip WHERE product_id = @product_id and reader_name = @reader_name and point_name = @point_name";
             try
