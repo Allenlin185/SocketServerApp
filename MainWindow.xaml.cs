@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml;
 using XMLMethod;
+using DBModels;
 namespace SocketServerApp
 {
     /// <summary>
@@ -33,12 +34,6 @@ namespace SocketServerApp
         SynchronizationContext _syncContext = null;
         private DispatcherTimer _getEquipment_timer = new DispatcherTimer();
         private GenerateXML hotaXML = new GenerateXML();
-        private static ManualResetEvent allDone = new ManualResetEvent(false);
-        private class CheckObject
-        {
-            public Socket workSocket = null;
-            public object ip_address;
-        }
         private byte[] KeepAlive()
         {
             uint dummy = 0;
@@ -160,8 +155,11 @@ namespace SocketServerApp
                             txSocket.Close();
                             continue;
                         }
-                        _syncContext.Post(ConnectSocketTrue, txSocket);
-                        ReceseMsgGoing(txSocket, remoteEpInfo);
+                        else
+                        {
+                            _syncContext.Post(ConnectSocketTrue, txSocket);
+                            ReceseMsgGoing(txSocket, remoteEpInfo);
+                        }
                     }
                 }
                 catch (Exception Ex)
@@ -184,6 +182,7 @@ namespace SocketServerApp
                         int getlength = txSocket.Receive(recesiveByte);
                         if (getlength <= 0) { break; }
                         string getmsg = Encoding.UTF8.GetString(recesiveByte, 0, getlength);
+                        if (getmsg == "") continue;
                         processData(remoteEpInfo, getmsg);
                     }
                     catch (Exception Ex)
@@ -212,11 +211,14 @@ namespace SocketServerApp
             string remoteEpInfo = clientSocket.RemoteEndPoint.ToString();
             string[] remoteArr = remoteEpInfo.ToString().Split(':');
             SocketLocation client = ReaderInfo.FirstOrDefault(c => c.ip_address == remoteArr[0]);
-            client.statusImage = "Images\\online.png";
-            client.SocketUid = remoteArr[1];
-            client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            if (string.IsNullOrEmpty(client.wip))
+            {
+                client.statusImage = "Images\\online.png";
+                client.SocketUid = remoteArr[1];
+                client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                lv_eqlist.Items.Refresh();
+            }
             client.ConnectSocket = clientSocket;
-            lv_eqlist.Items.Refresh();
         }
         private void ConnectSocketFalse(object removeinfo)
         {
@@ -237,9 +239,12 @@ namespace SocketServerApp
         {
             SocketLocation DataInfo = (SocketLocation)removeinfo;
             SocketLocation client = ReaderInfo.FirstOrDefault(c => c.ip_address == DataInfo.ip_address);
-            client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            client.wip = DataInfo.wip;
-            lv_eqlist.Items.Refresh();
+            if (client != null)
+            {
+                client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                client.wip = DataInfo.wip;
+                lv_eqlist.Items.Refresh();
+            }
         }
         private void clientMessage(string removeinfo, string msg)
         {
@@ -298,6 +303,7 @@ namespace SocketServerApp
                             RecvIGMessage(location, remoteData);
                             break;
                         case "YG":
+                        case "YG-M":
                             RecvYGMessage(location, remoteData);
                             break;
                         case "QC2":
@@ -340,11 +346,19 @@ namespace SocketServerApp
         private void RecvIGMessage(SocketLocation location, string ReaderData)
         {
             InnerdiameterManage IGManage = new InnerdiameterManage();
+            fileMethod.WriteLog(ReaderData);
+            if (ReaderData == "$TIME")
+            {
+                string remoteEpInfo = location.ip_address + ":" + location.SocketUid;
+                clientMessage(remoteEpInfo, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
+                return;
+            }
+            
             try
             {
                 string[] getMessage = ReaderData.Split('\n');
                 string[] columnArr = getMessage[1].Split(',');
-                Innerdiameter IGData = new Innerdiameter();
+                ShareTable IGData = new ShareTable();
                 if (string.IsNullOrEmpty(columnArr[1].Trim()))
                 {
                     fileMethod.WriteLog("The Innerdiameter WIP is null.");
@@ -365,7 +379,7 @@ namespace SocketServerApp
                     {
                         IGManage.InsertTable(IGData, connect);
                     }
-                    fileMethod.WriteIGDataforMerlin(ReaderData, location.readerno);
+                    fileMethod.WriteIGDataforMerlin(getMessage, location.readerno);
                     _syncContext.Post(AcceptData, location);
                 }
 
@@ -378,11 +392,18 @@ namespace SocketServerApp
         private void RecvYGMessage(SocketLocation location, string ReaderData)
         {
             ExternaldiameterManage YGManage = new ExternaldiameterManage();
+            if (ReaderData == "$TIME")
+            {
+                string remoteEpInfo = location.ip_address + ":" + location.SocketUid;
+                clientMessage(remoteEpInfo, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
+                return;
+            }
+            
             try
             {
                 string[] getMessage = ReaderData.Split('\n');
                 string[] columnArr = getMessage[1].Split(',');
-                Externaldiameter YGData = new Externaldiameter();
+                ShareTable YGData = new ShareTable();
                 if (string.IsNullOrEmpty(columnArr[1].Trim()))
                 {
                     fileMethod.WriteLog("The Externaldiameter WIP is null.");
@@ -403,7 +424,7 @@ namespace SocketServerApp
                     {
                         YGManage.InsertTable(YGData, connect);
                     }
-                    fileMethod.WriteIGDataforMerlin(ReaderData, location.readerno);
+                    fileMethod.WriteIGDataforMerlin(getMessage, location.readerno);
                     _syncContext.Post(AcceptData, location);
                 }
             }
@@ -427,17 +448,17 @@ namespace SocketServerApp
                 case "ONLINE01":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateOnline02(corr_id);
-                    fileMethod.WriteLog(returnmsg);
+                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateTimeSyc01(corr_id);
-                    fileMethod.WriteLog(returnmsg);
+                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "TMESYC02":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateCURInfo01(corr_id);
-                    fileMethod.WriteLog(returnmsg);
+                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "CURINF02":
@@ -445,13 +466,14 @@ namespace SocketServerApp
                 case "EQPSTS01":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateEQPSTS02(corr_id);
-                    fileMethod.WriteLog(returnmsg);
+                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "WRKEND01":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateWorkEND02(corr_id);
                     fileMethod.WriteLog(returnmsg);
+
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 default:

@@ -39,6 +39,9 @@
     <ApplicationIcon>hotalogo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DBModels">
+      <HintPath>..\DBModels\bin\Debug\DBModels.dll</HintPath>
+    </Reference>
     <Reference Include="MySql.Data, Version=8.0.25.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL" />
     <Reference Include="MySQLOperator">
       <HintPath>..\MySQLOperator\bin\Debug\MySQLOperator.dll</HintPath>
@@ -79,9 +82,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Models\backup_innerdiameter.cs" />
-    <Compile Include="Models\backup_ProgramMethod.cs" />
-    <Compile Include="Models\backup_GearGrinding.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
