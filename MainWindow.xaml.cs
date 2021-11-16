@@ -17,6 +17,9 @@ using System.Windows.Threading;
 using System.Xml;
 using XMLMethod;
 using DBModels;
+using MessageBox = System.Windows.MessageBox;
+using Application = System.Windows.Forms.Application;
+
 namespace SocketServerApp
 {
     /// <summary>
@@ -34,6 +37,7 @@ namespace SocketServerApp
         SynchronizationContext _syncContext = null;
         private DispatcherTimer _getEquipment_timer = new DispatcherTimer();
         private GenerateXML hotaXML = new GenerateXML();
+        private static Mutex mutex;
         private byte[] KeepAlive()
         {
             uint dummy = 0;
@@ -46,6 +50,20 @@ namespace SocketServerApp
         public MainWindow()
         {
             InitializeComponent();
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            mutex = new Mutex(true, "OnlyRun");
+            if (mutex.WaitOne(0, false))
+            {
+                //Application.Run(new MainForm());
+            }
+            else
+            {
+                MessageBox.Show("程式已經在執行！", "提示");
+                Environment.Exit(0);
+            }
+
             _syncContext = SynchronizationContext.Current;
             Initial();
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -188,9 +206,9 @@ namespace SocketServerApp
                     catch (Exception Ex)
                     {
                         Console.WriteLine("out line: " + Ex.Message);
-                        _syncContext.Post(ConnectSocketFalse, remoteEpInfo);
                         txSocket.Dispose();
                         txSocket.Close();
+                        _syncContext.Post(ConnectSocketFalse, remoteEpInfo);
                         break;
                     }
                 }
@@ -229,6 +247,7 @@ namespace SocketServerApp
             {
                 client.statusImage = "Images\\offline.png";
                 client.SocketUid = "";
+                client.wip = "";
                 client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 client.ConnectSocket = null;
             }
@@ -268,7 +287,8 @@ namespace SocketServerApp
             for (int i = ReaderInfo.Count - 1; i >= 0; i--)
             {
                 SocketLocation checkrow = ReaderInfo[i];
-                if (newInfo.FindIndex(c => c.ip_address == ReaderInfo[i].ip_address) == -1)
+                int rowIndex = newInfo.FindIndex(c => c.ip_address == ReaderInfo[i].ip_address);
+                if (rowIndex == -1)
                 {
                     if (checkrow.ConnectSocket != null)
                     {
@@ -276,6 +296,13 @@ namespace SocketServerApp
                         checkrow.ConnectSocket.Close();
                     }
                     ReaderInfo.RemoveAt(i);
+                }
+                else
+                {
+                    checkrow.ip_address = newInfo[rowIndex].ip_address;
+                    checkrow.location = newInfo[rowIndex].location;
+                    checkrow.readerno = newInfo[rowIndex].readerno;
+                    checkrow.pointname = newInfo[rowIndex].pointname;
                 }
             }
             _syncContext.Post(RefreshEQList, ReaderInfo);
@@ -306,8 +333,10 @@ namespace SocketServerApp
                         case "YG-M":
                             RecvYGMessage(location, remoteData);
                             break;
+                        case "QC1":
                         case "QC2":
-                            leonardoProcess(remoteEpInfo, remoteData);
+                        case "FQC":
+                            leonardoProcess(remoteEpInfo, remoteData, location);
                             break;
                     }
                     return true;
@@ -346,7 +375,6 @@ namespace SocketServerApp
         private void RecvIGMessage(SocketLocation location, string ReaderData)
         {
             InnerdiameterManage IGManage = new InnerdiameterManage();
-            fileMethod.WriteLog(ReaderData);
             if (ReaderData == "$TIME")
             {
                 string remoteEpInfo = location.ip_address + ":" + location.SocketUid;
@@ -398,7 +426,6 @@ namespace SocketServerApp
                 clientMessage(remoteEpInfo, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
                 return;
             }
-            
             try
             {
                 string[] getMessage = ReaderData.Split('\n');
@@ -434,31 +461,35 @@ namespace SocketServerApp
             }
         }
         //  Leonardo 等待原廠回覆後，再執行
-        private void leonardoProcess(string remoteEpInfo, string xmlData)
+        private void leonardoProcess(string remoteEpInfo, string xmlData, SocketLocation location)
         {
-            fileMethod.WriteLog(xmlData);
+            fileMethod.WriteLeonardoXMLData(xmlData, location.readerno);
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xmlData.Trim());
-            XmlElement root = doc.DocumentElement;
-            string corr_id = root.GetAttribute("corr_Id");
-            string fileType = doc.GetElementsByTagName("trx_id")[0]?.InnerText;
+            XmlNode rootNode = doc.DocumentElement;
+            string corr_id = rootNode.Attributes["corr_Id"].Value;
+            XmlNode FileTypeNode = rootNode.SelectSingleNode("/TrxSet/TITA/trx_id");
+            if (FileTypeNode == null)
+            {
+                FileTypeNode = rootNode.SelectSingleNode("/TrxSet/TOTA/trx_id");
+                if (FileTypeNode == null) return;
+            }
+            if (string.IsNullOrEmpty(FileTypeNode.InnerText.Trim())) return;
+            string fileType = FileTypeNode.InnerText.Trim();
             string returnmsg;
             switch (fileType)
             {
                 case "ONLINE01":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateOnline02(corr_id);
-                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateTimeSyc01(corr_id);
-                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "TMESYC02":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateCURInfo01(corr_id);
-                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "CURINF02":
@@ -466,20 +497,95 @@ namespace SocketServerApp
                 case "EQPSTS01":
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateEQPSTS02(corr_id);
-                    //fileMethod.WriteLog(returnmsg);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 case "WRKEND01":
+                    XmlNode WIPNode = rootNode.SelectSingleNode("/TrxSet/TITA/work_id");
+                    if (string.IsNullOrEmpty(WIPNode.InnerText.Trim()))
+                    {
+                        Thread.Sleep(500);
+                        returnmsg = hotaXML.CreateWorkEND02(corr_id);
+                        clientMessage(remoteEpInfo, returnmsg);
+                        return;
+                    }
+                    if (location.location == "QC1")
+                    {
+                        location.wip = ProcessQC1Data(doc);
+                    }
+                    else if (location.location == "QC2")
+                    {
+                        location.wip = ProcessQC2Data(doc);
+                    }
+                    else
+                    {
+                        //location.wip = ProcessFQCData(doc);
+                    }
+                    _syncContext.Post(AcceptData, location);
                     Thread.Sleep(500);
                     returnmsg = hotaXML.CreateWorkEND02(corr_id);
-                    fileMethod.WriteLog(returnmsg);
-
+                    clientMessage(remoteEpInfo, returnmsg);
+                    break;
+                case "WRKSTA01":
+                    Thread.Sleep(500);
+                    returnmsg = hotaXML.CreateWRKSTA02(corr_id);
                     clientMessage(remoteEpInfo, returnmsg);
                     break;
                 default:
                     fileMethod.WriteLog("無法判斷檔案類型");
                     break;
             }
+        }
+        private string ProcessQC1Data(XmlDocument doc)
+        {
+            Leonardoqc1Manage QC1Manage = new Leonardoqc1Manage();
+            Leonardoqc1 QC1Data = hotaXML.resolveQC1XML(doc);
+            DateTime existQctime = QC1Manage.CheckProductExist(QC1Data.product_id, connect);
+            if (existQctime == DateTime.MinValue)
+            {
+                QC1Manage.InsertTable(QC1Data, connect);
+            }
+            else
+            {
+                if (existQctime == QC1Data.qctime) return QC1Data.product_id;
+                if (existQctime < QC1Data.qctime)
+                {
+                    if (QC1Manage.InsertDuplTable(QC1Data.product_id, QC1Data.qctime, connect))
+                    {
+                        QC1Manage.UpdateTable(QC1Data, connect);
+                    }
+                }
+                else
+                {
+                    QC1Manage.NewDuplTable(QC1Data, connect);
+                }
+            }
+            return QC1Data.product_id;
+        }
+        private string ProcessQC2Data(XmlDocument doc)
+        {
+            Leonardoqc2Manage QC2Manage = new Leonardoqc2Manage();
+            Leonardoqc2 QC2Data = hotaXML.resolveQC2XML(doc);
+            DateTime existQctime = QC2Manage.CheckProductExist(QC2Data.product_id, connect);
+            if (existQctime == DateTime.MinValue)
+            {
+                QC2Manage.InsertTable(QC2Data, connect);
+            }
+            else
+            {
+                if (existQctime == QC2Data.qctime) return QC2Data.product_id;
+                if (existQctime < QC2Data.qctime)
+                {
+                    if (QC2Manage.InsertDuplTable(QC2Data.product_id, QC2Data.qctime, connect))
+                    {
+                        QC2Manage.UpdateTable(QC2Data, connect);
+                    }
+                }
+                else
+                {
+                    QC2Manage.NewDuplTable(QC2Data, connect);
+                }
+            }
+            return QC2Data.product_id;
         }
     }
 }
