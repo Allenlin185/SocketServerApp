@@ -1,0 +1,41 @@
+[33mcommit 212d3ec183099e67b6cbaafba3414989cb0c303c[m[33m ([m[1;36mHEAD -> [m[1;32mlisteq[m[33m)[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Tue Nov 16 17:59:03 2021 +0800
+
+    Hota Socket Server for MySQL
+    2021-11-16
+    新增Leonado 搜集資料流程
+
+[33mcommit 3de941e3131b94676e33b0019424ee67c328f628[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Wed Nov 3 11:37:23 2021 +0800
+
+    解決程式無故結束問題
+    修改資料表結構參考來源
+
+[33mcommit 527ecd019d1cac63806a0afde69d8131b5979627[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Mon Nov 1 08:15:43 2021 +0800
+
+    清除不必要的程式
+
+[33mcommit 93fcbbdf9da5f2a23107b21a0c3fae95c3d0f8eb[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Mon Nov 1 08:12:45 2021 +0800
+
+    即時判斷物理斷線功能
+
+[33mcommit 6b36acf277775b9695ea6672d48e0b97de297c44[m[33m ([m[1;32mmaster[m[33m)[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Mon Oct 25 08:48:09 2021 +0800
+
+    將對話流程改為XML資料傳遞
+
+[33mcommit f312456368b0033a66ad73f97173707e978347c1[m
+Author: allen lin <fs-50@hota.com.tw>
+Date:   Fri Sep 24 10:37:56 2021 +0800
+
+    Socket server 建置
+    1. GG 搜集資料完成
+    2. FQC 搜集資料只寫文字檔
+    需配合 SocketLocation 資料表執行

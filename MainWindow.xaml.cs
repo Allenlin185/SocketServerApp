@@ -460,7 +460,6 @@ namespace SocketServerApp
                 fileMethod.WriteLog(recv.Message);
             }
         }
-        //  Leonardo 等待原廠回覆後，再執行
         private void leonardoProcess(string remoteEpInfo, string xmlData, SocketLocation location)
         {
             fileMethod.WriteLeonardoXMLData(xmlData, location.readerno);
