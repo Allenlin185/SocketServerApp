@@ -24,9 +24,30 @@
                     <GridViewColumn Header="狀態" Width="65">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <Image Height="20" Width="20" Name="imageName" Source="{Binding statusImage}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1" Stretch="Fill"/>
+                                <Ellipse x:Name="status" Height="20" Width="20">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding status}" Value="0">
+                                                    <Setter Property="Fill" Value="Red"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding status}" Value="1">
+                                                    <Setter Property="Fill" Value="Green"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding status}" Value="2">
+                                                    <Setter Property="Fill" Value="LightSalmon"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
+                        <!--GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Height="20" Width="20" Name="imageName" Source="{Binding statusImage}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1" Stretch="Fill"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate-->
                     </GridViewColumn>
                     <GridViewColumn Header="接收時間" Width="200" DisplayMemberBinding="{Binding dt_getdata}"/>
                     <GridViewColumn Header="工件ID" Width="300" DisplayMemberBinding="{Binding wip}"/>

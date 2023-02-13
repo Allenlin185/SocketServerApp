@@ -231,7 +231,7 @@ namespace SocketServerApp
             SocketLocation client = ReaderInfo.FirstOrDefault(c => c.ip_address == remoteArr[0]);
             if (string.IsNullOrEmpty(client.wip))
             {
-                client.statusImage = "Images\\online.png";
+                client.status = 1;
                 client.SocketUid = remoteArr[1];
                 client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 lv_eqlist.Items.Refresh();
@@ -245,7 +245,7 @@ namespace SocketServerApp
             SocketLocation client = ReaderInfo.FirstOrDefault(c => c.ip_address == remoteArr[0]);
             if (client != null)
             {
-                client.statusImage = "Images\\offline.png";
+                client.status = 0;
                 client.SocketUid = "";
                 client.wip = "";
                 client.dt_getdata = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
