@@ -326,9 +326,6 @@ namespace SocketServerApp
                         case "GG":
                             RecvGGMessage(location, remoteData);
                             break;
-                        case "IG":
-                            RecvIGMessage(location, remoteData);
-                            break;
                         case "YG":
                         case "YG-M":
                             RecvYGMessage(location, remoteData);
@@ -336,6 +333,7 @@ namespace SocketServerApp
                         case "QC1":
                         case "QC2":
                         case "FQC":
+                        case "IG":
                             leonardoProcess(remoteEpInfo, remoteData, location);
                             break;
                     }
@@ -372,6 +370,7 @@ namespace SocketServerApp
                 fileMethod.WriteLog(recv.Message);
             }
         }
+        /*
         private void RecvIGMessage(SocketLocation location, string ReaderData)
         {
             InnerdiameterManage IGManage = new InnerdiameterManage();
@@ -417,8 +416,11 @@ namespace SocketServerApp
                 fileMethod.WriteLog(recv.Message);
             }
         }
+        */
         private void RecvYGMessage(SocketLocation location, string ReaderData)
         {
+
+            #region use share table
             ExternaldiameterManage YGManage = new ExternaldiameterManage();
             if (ReaderData == "$TIME")
             {
@@ -459,6 +461,7 @@ namespace SocketServerApp
             {
                 fileMethod.WriteLog(recv.Message);
             }
+            #endregion
         }
         private void leonardoProcess(string remoteEpInfo, string xmlData, SocketLocation location)
         {
@@ -514,6 +517,11 @@ namespace SocketServerApp
                     else if (location.location == "QC2")
                     {
                         location.wip = ProcessQC2Data(doc);
+                    }
+                    else if (location.location == "IG")
+                    {
+                        location.wip = ProcessQC2Data(doc);
+                        location.wip = RecvLeoIGMessage(doc);
                     }
                     else
                     {
@@ -585,6 +593,58 @@ namespace SocketServerApp
                 }
             }
             return QC2Data.product_id;
+        }
+        private string RecvLeoIGMessage(XmlDocument doc)
+        {
+            InnerdiameterManage IGManage = new InnerdiameterManage();
+            innerdiameter IGData = new innerdiameter();
+            Leonardoqc2 QC2Data = hotaXML.resolveQC2XML(doc);
+            IGData.product_id = QC2Data.product_id;
+            IGData.qctime = QC2Data.qctime;
+            if (QC2Data.q1ro_result == "GOOD" && QC2Data.q2ro_result == "GOOD" && QC2Data.q3diameter_result == "GOOD" && QC2Data.q4iro_result == "GOOD")
+            {
+                IGData.qc_result = "GOOD";
+            }
+            else
+            {
+                IGData.qc_result = "REJECT";
+            }
+            IGData.q1result = QC2Data.q1ro_result;
+            IGData.q1measured = QC2Data.q1ro_measured;
+            IGData.q1maxvalue = QC2Data.q1ro_maxvalue;
+            IGData.q2result = QC2Data.q2ro_result;
+            IGData.q2measured = QC2Data.q2ro_measured;
+            IGData.q2maxvalue = QC2Data.q2ro_maxvalue;
+            IGData.q3result = QC2Data.q3diameter_result;
+            IGData.q3measured = QC2Data.q3diameter_measured;
+            IGData.q3thresmin = QC2Data.q3diameter_thresmin;
+            IGData.q3thresmax = QC2Data.q3diameter_thresmax;
+            IGData.q4result = QC2Data.q4iro_result;
+            IGData.q4measured = QC2Data.q4iro_measured;
+            IGData.q4maxvalue = QC2Data.q4iro_maxvalue;
+            IGData.machine_no = QC2Data.machine_no;
+            IGData.ld_operator = QC2Data.ld_operator;
+            DateTime existQctime = IGManage.CheckProductExist(IGData.product_id, connect);
+            if (existQctime == DateTime.MinValue)
+            {
+                IGManage.InsertTable(IGData, connect);
+            }
+            else
+            {
+                if (existQctime == IGData.qctime) return IGData.product_id;
+                if (existQctime < IGData.qctime)
+                {
+                    if (IGManage.InsertDuplTable(IGData.product_id, IGData.qctime, connect))
+                    {
+                        IGManage.UpdateTable(IGData, connect);
+                    }
+                }
+                else
+                {
+                    IGManage.NewDuplTable(IGData, connect);
+                }
+            }
+            return IGData.product_id;
         }
     }
 }
