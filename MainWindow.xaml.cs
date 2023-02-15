@@ -419,15 +419,95 @@ namespace SocketServerApp
         */
         private void RecvYGMessage(SocketLocation location, string ReaderData)
         {
-
-            #region use share table
-            ExternaldiameterManage YGManage = new ExternaldiameterManage();
             if (ReaderData == "$TIME")
             {
                 string remoteEpInfo = location.ip_address + ":" + location.SocketUid;
                 clientMessage(remoteEpInfo, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
                 return;
             }
+            ExternaldiameterManage YGManage = new ExternaldiameterManage();
+            string[] getMessage = ReaderData.Split('\n');
+            string[] columnArr;
+            string ErroeLog = "The Externaldiameter File incomplete.";
+            if (getMessage.Length < 7)
+            {
+                if (getMessage.Length > 1)
+                {
+                    columnArr = getMessage[1].Split(',');
+                    if (columnArr.Length == 10)
+                        ErroeLog += " : " + location.readerno + "[" + columnArr[9].Trim() + "]";
+                }
+                fileMethod.WriteLog(ErroeLog);
+                return;
+            }
+            columnArr = getMessage[1].Split(',');
+            if (columnArr.Length != 10)
+            {
+                fileMethod.WriteLog(ErroeLog);
+                return;
+            }
+            externaldiameter YGData = new externaldiameter();
+            YGData = YGManage.initData(YGData);
+            if (string.IsNullOrEmpty(columnArr[1].Trim()))
+            {
+                fileMethod.WriteLog("The Externaldiameter WIP is null." + " : " + location.readerno + "[" + columnArr[9].Trim() + "]");
+                return;
+            }
+            DateTime qctime = DateTime.MinValue;
+            foreach (string Rowstr in getMessage)
+            {
+                if (string.IsNullOrEmpty(Rowstr)) continue;
+                columnArr = Rowstr.Split(',');
+                switch (columnArr[5])
+                {
+                    case "D5":
+                        YGData.product_id = columnArr[1].Trim();
+                        YGData.qctime = Convert.ToDateTime(columnArr[9].Trim());
+                        YGData.length = Convert.ToDecimal(columnArr[6].Trim());
+                        YGData.machine_no = location.readerno;
+                        location.wip = columnArr[1].Trim();
+                        break;
+                    case "D1":
+                        YGData.edmeasured2 = Convert.ToDecimal(columnArr[6].Trim());
+                        break;
+                    case "D2":
+                        YGData.edmeasured3 = Convert.ToDecimal(columnArr[6].Trim());
+                        break;
+                    case "R1":
+                        YGData.yaw1 = Convert.ToDecimal(columnArr[6].Trim());
+                        break;
+                    case "R2":
+                        YGData.yaw2 = Convert.ToDecimal(columnArr[6].Trim());
+                        break;
+                    case "":
+                        YGData.qc_result = columnArr[8].Trim() == "G" ? "OK" : "NG";
+                        break;
+
+                }
+            }
+            DateTime existQctime = YGManage.CheckProductExist(YGData.product_id, connect);
+            if (existQctime > qctime)
+            {
+                if (existQctime < YGData.qctime)
+                {
+                    if (YGManage.InsertDuplTable(YGData.product_id, YGData.qctime, connect))
+                    {
+                        YGManage.UpdateTable(YGData, connect);
+                    }
+                }
+                else if(existQctime > YGData.qctime)
+                {
+                    YGManage.NewDuplTable(YGData, connect);
+                }
+            }
+            else
+            {
+                YGManage.InsertTable(YGData, connect);
+            }
+            fileMethod.WriteDataforMerlin(getMessage, location.readerno);
+            _syncContext.Post(AcceptData, location);
+            #region use share table
+            /*
             try
             {
                 string[] getMessage = ReaderData.Split('\n');
@@ -461,6 +541,7 @@ namespace SocketServerApp
             {
                 fileMethod.WriteLog(recv.Message);
             }
+            */
             #endregion
         }
         private void leonardoProcess(string remoteEpInfo, string xmlData, SocketLocation location)
@@ -525,7 +606,7 @@ namespace SocketServerApp
                     }
                     else
                     {
-                        //location.wip = ProcessFQCData(doc);
+                        location.wip = ProcessFQCData(doc);
                     }
                     _syncContext.Post(AcceptData, location);
                     Thread.Sleep(500);
@@ -571,39 +652,74 @@ namespace SocketServerApp
         private string ProcessQC2Data(XmlDocument doc)
         {
             Leonardoqc2Manage QC2Manage = new Leonardoqc2Manage();
-            Leonardoqc2 QC2Data = hotaXML.resolveQC2XML(doc);
+            Leonardoqc201 QC2Data = hotaXML.resolveQC2XML01(doc);
             DateTime existQctime = QC2Manage.CheckProductExist(QC2Data.product_id, connect);
             if (existQctime == DateTime.MinValue)
             {
-                QC2Manage.InsertTable(QC2Data, connect);
+                QC2Manage.InsertTable01(QC2Data, connect);
             }
             else
             {
                 if (existQctime == QC2Data.qctime) return QC2Data.product_id;
                 if (existQctime < QC2Data.qctime)
                 {
-                    if (QC2Manage.InsertDuplTable(QC2Data.product_id, QC2Data.qctime, connect))
+                    if (QC2Manage.InsertDuplTable01(QC2Data.product_id, QC2Data.qctime, connect))
                     {
-                        QC2Manage.UpdateTable(QC2Data, connect);
+                        QC2Manage.UpdateTable01(QC2Data, connect);
                     }
                 }
                 else
                 {
-                    QC2Manage.NewDuplTable(QC2Data, connect);
+                    QC2Manage.NewDuplTable01(QC2Data, connect);
                 }
             }
             return QC2Data.product_id;
         }
+        private string ProcessFQCData(XmlDocument doc)
+        {
+            LeonardoFQCManage FQCManage = new LeonardoFQCManage();
+            Leonardofqc FQCData = hotaXML.resolveFQCXML(doc);
+            DateTime existQctime = FQCManage.CheckProductExist(FQCData.product_id, connect);
+            if (existQctime == DateTime.MinValue)
+            {
+                FQCManage.InsertTable(FQCData, connect);
+            }
+            else
+            {
+                if (existQctime == FQCData.qctime) return FQCData.product_id;
+                if (existQctime < FQCData.qctime)
+                {
+                    if (FQCManage.InsertDuplTable(FQCData.product_id, FQCData.qctime, connect))
+                    {
+                        FQCManage.UpdateTable(FQCData, connect);
+                    }
+                }
+                else
+                {
+                    FQCManage.NewDuplTable(FQCData, connect);
+                }
+            }
+            return FQCData.product_id;
+        }
         private string RecvLeoIGMessage(XmlDocument doc)
         {
             InnerdiameterManage IGManage = new InnerdiameterManage();
-            innerdiameter IGData = new innerdiameter();
-            Leonardoqc2 QC2Data = hotaXML.resolveQC2XML(doc);
+            innerdiameter01 IGData = new innerdiameter01();
+            Leonardoqc201 QC2Data = hotaXML.resolveQC2XML01(doc);
             IGData.product_id = QC2Data.product_id;
             IGData.qctime = QC2Data.qctime;
-            if (QC2Data.q1ro_result == "GOOD" && QC2Data.q2ro_result == "GOOD" && QC2Data.q3diameter_result == "GOOD" && QC2Data.q4iro_result == "GOOD")
+            if (QC2Data.q1ro_result == "GOOD" && QC2Data.q2ro_result == "GOOD" 
+                && QC2Data.q3diameter_result == "GOOD" && QC2Data.q4iro_result == "GOOD")
             {
-                IGData.qc_result = "GOOD";
+                if (QC2Data.q7edr_result == "REJECT" || QC2Data.q8edr_result == "REJECT")
+                {
+                    IGData.qc_result = "REJECT";
+                } 
+                else
+                {
+                    IGData.qc_result = "GOOD";
+                }
+                
             }
             else
             {
@@ -622,26 +738,30 @@ namespace SocketServerApp
             IGData.q4result = QC2Data.q4iro_result;
             IGData.q4measured = QC2Data.q4iro_measured;
             IGData.q4maxvalue = QC2Data.q4iro_maxvalue;
+            IGData.q5result = QC2Data.q7edr_result;
+            IGData.q5measured = QC2Data.q7edr_measured;
+            IGData.q6result = QC2Data.q8edr_result;
+            IGData.q6measured = QC2Data.q8edr_measured;
             IGData.machine_no = QC2Data.machine_no;
             IGData.ld_operator = QC2Data.ld_operator;
             DateTime existQctime = IGManage.CheckProductExist(IGData.product_id, connect);
             if (existQctime == DateTime.MinValue)
             {
-                IGManage.InsertTable(IGData, connect);
+                IGManage.InsertTable01(IGData, connect);
             }
             else
             {
                 if (existQctime == IGData.qctime) return IGData.product_id;
                 if (existQctime < IGData.qctime)
                 {
-                    if (IGManage.InsertDuplTable(IGData.product_id, IGData.qctime, connect))
+                    if (IGManage.InsertDuplTable01(IGData.product_id, IGData.qctime, connect))
                     {
-                        IGManage.UpdateTable(IGData, connect);
+                        IGManage.UpdateTable01(IGData, connect);
                     }
                 }
                 else
                 {
-                    IGManage.NewDuplTable(IGData, connect);
+                    IGManage.NewDuplTable01(IGData, connect);
                 }
             }
             return IGData.product_id;
